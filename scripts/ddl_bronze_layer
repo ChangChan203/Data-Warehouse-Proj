@@ -1,0 +1,230 @@
+/*
+Tạo bảng --> Đẩy dữ liệu --> Thêm khóa 
+*/
+-- Bảng Office
+IF OBJECT_ID('bronze.Office', 'U') IS NOT NULL DROP TABLE bronze.Office;
+CREATE TABLE bronze.Office (
+    cityID NVARCHAR(20) PRIMARY KEY,
+    cityName NVARCHAR(100),
+    officeAddress NVARCHAR(200),
+    [state] NVARCHAR(100),
+    establishmentDate DATETIME
+);
+
+-- Bảng Store
+IF OBJECT_ID('bronze.Store', 'U') IS NOT NULL DROP TABLE bronze.Store;
+CREATE TABLE bronze.Store (
+    storeID NVARCHAR(20) PRIMARY KEY,
+    phone VARCHAR(20),
+    openingDate DATE,
+    cityID NVARCHAR(20)
+);
+
+-- Bảng Item
+IF OBJECT_ID('bronze.Item', 'U') IS NOT NULL DROP TABLE bronze.Item;
+CREATE TABLE bronze.Item (
+    itemID NVARCHAR(20) PRIMARY KEY,
+    [des] NVARCHAR(200),
+    size NVARCHAR(50),
+    [weight] FLOAT,
+    price MONEY,
+    manufactureDate DATE
+);
+
+-- Bảng Inventory
+IF OBJECT_ID('bronze.Inventory', 'U') IS NOT NULL DROP TABLE bronze.Inventory;
+CREATE TABLE bronze.Inventory (
+    storeID NVARCHAR(20),
+    itemID NVARCHAR(20),
+    inventoryQuantity INT,
+    importedDate DATETIME,
+    PRIMARY KEY (storeID, itemID)
+);
+
+-- Bảng Customer
+IF OBJECT_ID('bronze.Customer', 'U') IS NOT NULL DROP TABLE bronze.Customer;
+CREATE TABLE bronze.Customer (
+    customerID NVARCHAR(20) PRIMARY KEY,
+    customerName NVARCHAR(100),
+    cityID NVARCHAR(20),
+    firstOrderDate DATE
+);
+
+-- Bảng PostalCustomer
+IF OBJECT_ID('bronze.PostalCustomer', 'U') IS NOT NULL DROP TABLE bronze.PostalCustomer;
+CREATE TABLE bronze.PostalCustomer (
+    customerID NVARCHAR(20) PRIMARY KEY,
+    postOfficeAddr NVARCHAR(200)
+);
+
+-- Bảng TouristCustomer
+IF OBJECT_ID('bronze.TouristCustomer', 'U') IS NOT NULL DROP TABLE bronze.TouristCustomer;
+CREATE TABLE bronze.TouristCustomer (
+    customerID NVARCHAR(20) PRIMARY KEY,
+    tourGuide NVARCHAR(100)
+);
+
+-- Bảng Order
+IF OBJECT_ID('bronze.[Order]', 'U') IS NOT NULL DROP TABLE bronze.[Order];
+CREATE TABLE bronze.[Order] (
+    orderID NVARCHAR(20) PRIMARY KEY,
+    orderDate DATE,
+    customerID NVARCHAR(20)
+);
+
+-- Bảng OrderedItem
+IF OBJECT_ID('bronze.OrderedItem', 'U') IS NOT NULL DROP TABLE bronze.OrderedItem;
+CREATE TABLE bronze.OrderedItem (
+    orderID NVARCHAR(20),
+    itemID NVARCHAR(20),
+    orderedAmount INT,
+    orderedPrice MONEY,
+    PRIMARY KEY (orderID, itemID)
+);
+
+-- Push dữ liệu
+  -- OFFICE
+TRUNCATE TABLE bronze.Office;
+BULK INSERT bronze.Office
+FROM 'D:\Kỳ 8\Data Warehouse & Data Mining\dataset\office.csv'
+WITH (
+    FIRSTROW = 2,
+    FIELDTERMINATOR = ',',
+    TABLOCK
+);
+SELECT * FROM bronze.Office;
+
+-- STORE
+TRUNCATE TABLE bronze.Store;
+BULK INSERT bronze.Store
+FROM 'D:\Kỳ 8\Data Warehouse & Data Mining\dataset\store.csv'
+WITH (
+    FIRSTROW = 2,
+    FIELDTERMINATOR = ',',
+    TABLOCK
+);
+SELECT * FROM bronze.Store;
+
+-- ITEM
+TRUNCATE TABLE bronze.Item;
+BULK INSERT bronze.Item
+FROM 'D:\Kỳ 8\Data Warehouse & Data Mining\dataset\item.csv'
+WITH (
+    FIRSTROW = 2,
+    FIELDTERMINATOR = ',',
+    TABLOCK
+);
+SELECT * FROM bronze.Item;
+
+-- INVENTORY
+TRUNCATE TABLE bronze.Inventory;
+BULK INSERT bronze.Inventory
+FROM 'D:\Kỳ 8\Data Warehouse & Data Mining\dataset\inventory.csv'
+WITH (
+    FIRSTROW = 2,
+    FIELDTERMINATOR = ',',
+    TABLOCK
+);
+SELECT * FROM bronze.Inventory;
+
+-- CUSTOMER
+TRUNCATE TABLE bronze.Customer;
+BULK INSERT bronze.Customer
+FROM 'D:\Kỳ 8\Data Warehouse & Data Mining\dataset\customer.csv'
+WITH (
+    FIRSTROW = 2,
+    FIELDTERMINATOR = ',',
+    TABLOCK
+);
+SELECT * FROM bronze.Customer;
+
+-- POSTAL CUSTOMER
+TRUNCATE TABLE bronze.PostalCustomer;
+BULK INSERT bronze.PostalCustomer
+FROM 'D:\Kỳ 8\Data Warehouse & Data Mining\dataset\postalCustomer.csv'
+WITH (
+    FIRSTROW = 2,
+    FIELDTERMINATOR = ',',
+    TABLOCK
+);
+SELECT * FROM bronze.PostalCustomer;
+
+-- TOURIST CUSTOMER
+TRUNCATE TABLE bronze.TouristCustomer;
+BULK INSERT bronze.TouristCustomer
+FROM 'D:\Kỳ 8\Data Warehouse & Data Mining\dataset\touristCustomer.csv'
+WITH (
+    FIRSTROW = 2,
+    FIELDTERMINATOR = ',',
+    TABLOCK
+);
+SELECT * FROM bronze.TouristCustomer;
+
+-- ORDER
+TRUNCATE TABLE bronze.[Order];
+BULK INSERT bronze.[Order]
+FROM 'D:\Kỳ 8\Data Warehouse & Data Mining\dataset\order.csv'
+WITH (
+    FIRSTROW = 2,
+    FIELDTERMINATOR = ',',
+    TABLOCK
+);
+SELECT * FROM bronze.[Order];
+
+-- ORDERED ITEM
+TRUNCATE TABLE bronze.OrderedItem;
+BULK INSERT bronze.OrderedItem
+FROM 'D:\Kỳ 8\Data Warehouse & Data Mining\dataset\output.csv'
+WITH (
+    FIRSTROW = 2,
+    FIELDTERMINATOR = '|',
+    TABLOCK
+);
+SELECT * FROM bronze.OrderedItem;
+
+
+-- Thêm khóa
+  -- Store → Office
+ALTER TABLE bronze.Store
+ADD CONSTRAINT FK_Store_Office
+FOREIGN KEY (cityID) REFERENCES bronze.Office(cityID);
+
+-- Inventory → Store
+ALTER TABLE bronze.Inventory
+ADD CONSTRAINT FK_Inventory_Store
+FOREIGN KEY (storeID) REFERENCES bronze.Store(storeID);
+
+-- Inventory → Item
+ALTER TABLE bronze.Inventory
+ADD CONSTRAINT FK_Inventory_Item
+FOREIGN KEY (itemID) REFERENCES bronze.Item(itemID);
+
+-- Customer → Office
+ALTER TABLE bronze.Customer
+ADD CONSTRAINT FK_Customer_Office
+FOREIGN KEY (cityID) REFERENCES bronze.Office(cityID);
+
+-- PostalCustomer → Customer
+ALTER TABLE bronze.PostalCustomer
+ADD CONSTRAINT FK_PostalCustomer_Customer
+FOREIGN KEY (customerID) REFERENCES bronze.Customer(customerID);
+
+-- TouristCustomer → Customer
+ALTER TABLE bronze.TouristCustomer
+ADD CONSTRAINT FK_TouristCustomer_Customer
+FOREIGN KEY (customerID) REFERENCES bronze.Customer(customerID);
+
+-- Order → Customer
+ALTER TABLE bronze.[Order]
+ADD CONSTRAINT FK_Order_Customer
+FOREIGN KEY (customerID) REFERENCES bronze.Customer(customerID);
+
+-- OrderedItem → Order
+ALTER TABLE bronze.OrderedItem
+ADD CONSTRAINT FK_OrderedItem_Order
+FOREIGN KEY (orderID) REFERENCES bronze.[Order](orderID);
+
+-- OrderedItem → Item
+ALTER TABLE bronze.OrderedItem
+ADD CONSTRAINT FK_OrderedItem_Item
+FOREIGN KEY (itemID) REFERENCES bronze.Item(itemID);
